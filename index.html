@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Security Demo - VLANs & Firewalls</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+    <div class="container">
+   <h1>?? Network Security Demo</h1>
+       <p class="subtitle">Understanding Layer 2 & Layer 4 Security</p>
+        </div>
+    </header>
+
+    <main class="container">
+  <!-- Introduction Section -->
+        <section class="intro-section">
+ <h2>Welcome to Network Security Fundamentals</h2>
+         <p>This demo explores two critical components of network security: VLANs for Layer 2 segmentation and Firewalls for Layer 4 service control.</p>
+        </section>
+
+   <!-- VLAN Section -->
+     <section class="security-card vlan-section">
+            <div class="icon">??</div>
+      <h2>VLANs - Layer 2 Security</h2>
+         <p class="layer-badge">OSI Layer 2: Data Link Layer</p>
+    
+            <h3>What are VLANs?</h3>
+            <p>Virtual Local Area Networks (VLANs) are a powerful Layer 2 security mechanism that logically segments network traffic, even when devices share the same physical infrastructure.</p>
+   
+            <h3>How VLANs Enhance Security</h3>
+            <ul class="security-list">
+     <li><strong>Network Segmentation:</strong> Isolate different departments, user groups, or device types into separate broadcast domains</li>
+            <li><strong>Broadcast Control:</strong> Limit broadcast traffic to specific VLANs, preventing network-wide exposure</li>
+            <li><strong>Access Control:</strong> Restrict communication between VLANs, requiring routing through controlled points</li>
+         <li><strong>Reduced Attack Surface:</strong> Compromised devices in one VLAN cannot directly access devices in another VLAN</li>
+        <li><strong>Guest Network Isolation:</strong> Keep guest users separated from corporate resources</li>
+        </ul>
+
+     <div class="example-box">
+    <h4>Example Configuration:</h4>
+          <pre><code>! Creating VLANs on a switch
+vlan 10
+  name CORPORATE
+vlan 20
+  name GUEST
+vlan 30
+  name SERVERS
+
+! Assigning ports to VLANs
+interface GigabitEthernet0/1
+  switchport mode access
+  switchport access vlan 10</code></pre>
+   </div>
+
+  <div class="benefit-box">
+           <strong>Security Benefit:</strong> Even if an attacker gains access to the guest network (VLAN 20), they cannot directly communicate with corporate workstations (VLAN 10) or servers (VLAN 30) at Layer 2.
+            </div>
+        </section>
+
+   <!-- Firewall Section -->
+        <section class="security-card firewall-section">
+            <div class="icon">???</div>
+ <h2>Firewalls - Layer 4 Security</h2>
+  <p class="layer-badge">OSI Layer 4: Transport Layer</p>
+   
+   <h3>What are Firewalls?</h3>
+          <p>Firewalls operate at Layer 4 (and above) to control network traffic based on port numbers and protocols, allowing granular control over which services are accessible.</p>
+     
+ <h3>Layer 4 Service Control</h3>
+   <p>At Layer 4, firewalls can distinguish between different services running on the same device by examining TCP/UDP port numbers:</p>
+      <ul class="security-list">
+       <li><strong>SSH (Port 22):</strong> Secure remote access protocol</li>
+ <li><strong>HTTP (Port 80):</strong> Web traffic protocol</li>
+          <li><strong>HTTPS (Port 443):</strong> Encrypted web traffic</li>
+                <li><strong>And many more...</strong> Each service uses specific ports</li>
+       </ul>
+
+            <h3>Allowing HTTP While Denying SSH</h3>
+      <p>A common security scenario is to allow public access to web services (HTTP/HTTPS) while blocking remote administration (SSH) from untrusted networks.</p>
+
+         <div class="example-box">
+         <h4>Example: Linux iptables Configuration</h4>
+      <pre><code># Allow HTTP traffic (port 80)
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+
+# Allow HTTPS traffic (port 443)
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
+# Deny SSH from external networks (allow only from internal)
+iptables -A INPUT -p tcp --dport 22 -s 192.168.1.0/24 -j ACCEPT
+iptables -A INPUT -p tcp --dport 22 -j DROP
+
+# Set default policy
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT ACCEPT</code></pre>
+  </div>
+
+   <div class="example-box">
+       <h4>Example: Windows Firewall (PowerShell)</h4>
+<pre><code># Allow HTTP inbound
+New-NetFirewallRule -DisplayName "Allow HTTP" `
+  -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow
+
+# Allow HTTPS inbound
+New-NetFirewallRule -DisplayName "Allow HTTPS" `
+  -Direction Inbound -Protocol TCP -LocalPort 443 -Action Allow
+
+# Block SSH from external, allow from internal network
+New-NetFirewallRule -DisplayName "Allow SSH Internal Only" `
+  -Direction Inbound -Protocol TCP -LocalPort 22 `
+  -RemoteAddress 192.168.1.0/24 -Action Allow
+
+New-NetFirewallRule -DisplayName "Block SSH External" `
+  -Direction Inbound -Protocol TCP -LocalPort 22 -Action Block</code></pre>
+     </div>
+
+         <div class="example-box">
+           <h4>Example: Cisco ASA Firewall</h4>
+          <pre><code>! Allow HTTP and HTTPS from outside to DMZ web server
+access-list OUTSIDE_IN permit tcp any host 203.0.113.10 eq 80
+access-list OUTSIDE_IN permit tcp any host 203.0.113.10 eq 443
+
+! Deny SSH from outside (implicit deny)
+! SSH access only allowed from inside network
+access-list INSIDE_IN permit tcp 192.168.1.0 255.255.255.0 any eq 22
+
+access-group OUTSIDE_IN in interface outside
+access-group INSIDE_IN in interface inside</code></pre>
+            </div>
+
+         <div class="benefit-box">
+      <strong>Security Benefit:</strong> Web services remain publicly accessible for legitimate users, while SSH access is restricted to trusted networks, significantly reducing the attack surface for remote exploitation.
+  </div>
+        </section>
+
+        <!-- Combined Security Section -->
+        <section class="security-card combined-section">
+       <div class="icon">??</div>
+    <h2>Layered Security Approach</h2>
+        
+ <h3>Defense in Depth</h3>
+    <p>Combining VLANs (Layer 2) and Firewalls (Layer 4+) creates a robust, multi-layered security architecture:</p>
+    
+            <div class="security-layers">
+        <div class="layer">
+        <h4>Layer 2: VLAN Segmentation</h4>
+      <p>Separates network segments to prevent lateral movement</p>
+        </div>
+  <div class="arrow">?</div>
+<div class="layer">
+   <h4>Layer 3: Routing Control</h4>
+      <p>Controls inter-VLAN communication through routers/firewalls</p>
+          </div>
+<div class="arrow">?</div>
+          <div class="layer">
+    <h4>Layer 4: Service Filtering</h4>
+         <p>Granular control over which services are accessible</p>
+              </div>
+        </div>
+
+        <div class="use-case">
+      <h4>Real-World Use Case:</h4>
+            <ol>
+    <li><strong>VLAN Segmentation:</strong> Separate corporate users, guest WiFi, and servers into different VLANs</li>
+    <li><strong>Inter-VLAN Routing:</strong> Force all VLAN-to-VLAN traffic through a firewall</li>
+         <li><strong>Firewall Rules:</strong> Allow guests to access web servers on HTTP/HTTPS but deny SSH access completely</li>
+            <li><strong>Result:</strong> Guests can browse websites, but cannot attempt SSH brute-force attacks on servers</li>
+                </ol>
+   </div>
+        </section>
+
+        <!-- Best Practices Section -->
+        <section class="security-card best-practices">
+    <div class="icon">?</div>
+         <h2>Security Best Practices</h2>
+       
+  <div class="practices-grid">
+  <div class="practice">
+      <h4>VLAN Best Practices</h4>
+      <ul>
+        <li>Use separate VLANs for different security zones</li>
+           <li>Implement private VLANs for additional isolation</li>
+     <li>Disable DTP (Dynamic Trunking Protocol)</li>
+           <li>Use 802.1X for port-based authentication</li>
+     </ul>
+        </div>
+      <div class="practice">
+  <h4>Firewall Best Practices</h4>
+       <ul>
+      <li>Follow the principle of least privilege</li>
+      <li>Default deny, explicitly allow only necessary services</li>
+ <li>Regularly review and audit firewall rules</li>
+      <li>Use stateful inspection when possible</li>
+   <li>Log denied connections for security monitoring</li>
+    </ul>
+      </div>
+       </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+<p>&copy; 2024 Network Security Demo | Educational Purpose</p>
+            <p>Built for the Network Security Club</p>
+        </div>
+    </footer>
+</body>
+</html>
